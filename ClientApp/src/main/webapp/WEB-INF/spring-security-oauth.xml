@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:oauth="http://www.springframework.org/schema/security/oauth2"
+	xmlns:sec="http://www.springframework.org/schema/security" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	http://www.springframework.org/schema/beans/spring-beans.xsd
+	http://www.springframework.org/schema/security/oauth2 
+	http://www.springframework.org/schema/security/spring-security-oauth2.xsd
+	http://www.springframework.org/schema/security
+	http://www.springframework.org/schema/security/spring-security.xsd
+	http://www.springframework.org/schema/context 
+	http://www.springframework.org/schema/context/spring-context.xsd">
+
+	<oauth:resource id="resource" client-id="my-trusted-client"
+		type="authorization_code" user-authorization-uri="${oauth.authorize:http://localhost:8080/oauth/authorize}"
+		access-token-uri="${oauth.token:http://localhost:8080/oauth/token}" />
+
+	<oauth:rest-template id="restTemplate" resource="anonymousResource" />
+
+	<sec:http pattern="/**" use-expressions="true" create-session="stateless"
+		authentication-manager-ref="clientAuthenticationManager"
+		entry-point-ref="clientAuthenticationEntryPoint">
+
+		<sec:intercept-url pattern="/content/localization**"
+			access="#oauth2.clientHasRole('ROLE_CLIENT') and (hasRole('ROLE_USER'))" />
+
+		<sec:custom-filter ref="resourceServerFilter"
+			before="PRE_AUTH_FILTER" />
+		<sec:access-denied-handler ref="oauthAccessDeniedHandler" />
+		<sec:expression-handler ref="oauthWebExpressionHandler" />
+
+		<sec:anonymous enabled="true" />
+
+	</sec:http>
+
+	<oauth:resource-server id="resourceServerFilter"
+		resource-id="anonymousResource" />
+
+	<bean id="oauthAccessDeniedHandler"
+		class="org.springframework.security.oauth2.provider.error.OAuth2AccessDeniedHandler" />
+
+	<bean id="clientAuthenticationEntryPoint"
+		class="org.springframework.security.oauth2.provider.error.OAuth2AuthenticationEntryPoint">
+		<property name="typeName" value="Basic" />
+	</bean>
+
+	<bean id="oauthWebExpressionHandler"
+		class="org.springframework.security.oauth2.provider.expression.OAuth2WebSecurityExpressionHandler" />
+
+	<bean id="clientCredentialsTokenEndpointFilter"
+		class="org.springframework.security.oauth2.provider.client.ClientCredentialsTokenEndpointFilter">
+		<property name="authenticationManager" ref="clientAuthenticationManager" />
+	</bean>
+
+	<bean id="clientDetails"
+		class="org.springframework.security.oauth2.provider.client.BaseClientDetails">
+		<property name="clientId" value="directsales" />
+		<property name="clientSecret" value="dssecret" />
+		<property name="scope" value="read,trust" />
+		<property name="resourceIds" value="resource" />
+		<property name="authorizedGrantTypes" value="authorization_code" />
+		<property name="registeredRedirectUri" value="/content/localization" />
+		<property name="authorities">
+			<list>
+				<bean
+					class="org.springframework.security.core.authority.SimpleGrantedAuthority">
+					<constructor-arg type="java.lang.String" value="ROLE_CLIENT"></constructor-arg>
+				</bean>
+			</list>
+		</property>
+	</bean>
+
+	<bean id="anonymousResource"
+		class="com.cgi.security.oauth2.ExtendedBaseOAuth2ProtectedResourceDetails">
+		<property name="clientId" value="directsales"></property>
+		<property name="clientSecret" value="dssecret"></property>
+		<property name="accessTokenUri" value="${accessTokenUri}"></property>
+		<property name="userAuthorizationUri" value="${userAuthorizationUri}"></property>
+		<property name="scope" value="#{{'read','write'}}">
+		</property>
+	</bean>
+
+	<sec:authentication-manager id="clientAuthenticationManager">
+		<sec:authentication-provider
+			user-service-ref="clientDetailsUserService" />
+	</sec:authentication-manager>
+
+	<bean id="clientDetailsUserService"
+		class="org.springframework.security.oauth2.provider.client.ClientDetailsUserDetailsService">
+		<constructor-arg ref="clientDetailsService" />
+	</bean>
+
+	<bean id="clientDetailsService"
+		class="org.springframework.security.oauth2.provider.client.InMemoryClientDetailsService">
+		<property name="clientDetailsStore">
+			<map>
+				<entry key="rest-api-client" value-ref="clientDetails"></entry>
+			</map>
+		</property>
+	</bean>
+
+</beans>
