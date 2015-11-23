@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:oauth="http://www.springframework.org/schema/security/oauth2"
+	xmlns:sec="http://www.springframework.org/schema/security" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	http://www.springframework.org/schema/beans/spring-beans.xsd
+	http://www.springframework.org/schema/security/oauth2 
+	http://www.springframework.org/schema/security/spring-security-oauth2.xsd
+	http://www.springframework.org/schema/security
+	http://www.springframework.org/schema/security/spring-security.xsd
+	http://www.springframework.org/schema/context 
+	http://www.springframework.org/schema/context/spring-context.xsd">
+
+	<!-- elements a definir pour le client -->
+	<!-- 1. authentication-manager -->
+	<!-- 2. http -->
+	<!-- 3. oauth2:resource le endpoint a consommer pour auth et token -->
+	<!-- 4. oauth2:client fondamental -->
+	<!-- 5. oauth2:rest-template pour acceder aux services rest -->
+
+	<!-- 1/5. authentication-manager en memoire avec 2 users hard-codes (p-e 
+		pas necessaire pour Charter) -->
+	<sec:authentication-manager>
+		<sec:authentication-provider>
+			<sec:user-service>
+				<sec:user name="myuser" password="myuser" authorities="USER" />
+				<sec:user name="pducharme" password="pducharme"
+					authorities="USER" />
+			</sec:user-service>
+		</sec:authentication-provider>
+	</sec:authentication-manager>
+
+	<!-- 2/5. http securite de l'appli (a revoir pour Charter) -->
+	<sec:http auto-config='true'>
+		<sec:intercept-url pattern="/resource/**" access="hasAuthority('USER')" />
+		<sec:custom-filter ref="oauth2ClientFilter"
+			after="EXCEPTION_TRANSLATION_FILTER" />
+	</sec:http>
+
+	<!-- 3/5. oauth2:resource le endpoint a consommer pour auth et token -->
+	<oauth:resource id="oAuth2ClientBean"
+		client-authentication-scheme="header" client-id="TestClient"
+		client-secret="y471l12D2y55U5558rd2" authentication-scheme="header"
+		type="authorization_code" scope="READ,WRITE,TRUST"
+		user-authorization-uri="http://localhost:8080/support/oauth/authorize"
+		access-token-uri="http://localhost:8080/support/oauth/token" />
+	
+
+
+	<!-- 4/5. oauth2:client ajoute oauth2 au contexte -->
+	<oauth:client id="oauth2ClientFilter" />
+
+	<!-- 5. oauth2:rest-template pour acceder aux services rest (voir ResourceLoader.java) -->
+	<oauth:rest-template id="myRestTemplate"
+		resource="oAuth2ClientBean" />
+
+</beans>
