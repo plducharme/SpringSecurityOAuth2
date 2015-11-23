@@ -1,11 +1,14 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
 	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:oauth="http://www.springframework.org/schema/security/oauth2"
 	xmlns:sec="http://www.springframework.org/schema/security" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="
         http://www.springframework.org/schema/beans     
         http://www.springframework.org/schema/beans/spring-beans.xsd
         http://www.springframework.org/schema/context 
-        http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/context/spring-context.xsd	    
+	    http://www.springframework.org/schema/security/oauth2 
+	    http://www.springframework.org/schema/security/spring-security-oauth2.xsd
 	    http://www.springframework.org/schema/security 
 	    http://www.springframework.org/schema/security/spring-security-4.0.xsd">
 
@@ -21,11 +24,81 @@
 		</property>
 	</bean>
 
-	<sec:http auto-config="true" use-expressions="false" >
-		<sec:intercept-url access="ROLE_USER" pattern="/basicauthresource*" />
+	<sec:http pattern="/basicauth/**" auto-config="true"
+		use-expressions="false">
+		<sec:intercept-url access="ROLE_USER" pattern="/basicauth/**" />
 		<sec:http-basic />
 	</sec:http>
 
+	<sec:http pattern="/oauth/**" auto-config="true">
+		<sec:custom-filter before="FILTER_SECURITY_INTERCEPTOR "
+			ref="oauth2AuthFilter" />
+	</sec:http>
+
+	<!-- oauth:resource-server ajoute automatiquement le filtre OAuth2AuthenticationProcessingFilter 
+		avec OAuth2AuthenticationManager par defaut -->
+	<oauth:resource-server id="oauth2AuthFilter"
+		resource-id="springsec" />
+<!-- 		resource-id="springsec" authentication-manager-ref="authenticationManagerWithHardcodedClientDetails" /> -->
+
+
+<!-- 	<bean id="authenticationManagerWithHardcodedClientDetails" -->
+<!-- 		class="org.springframework.security.oauth2.provider.authentication.OAuth2AuthenticationManager"> -->
+<!-- 		<property name="clientDetailsService" ref="clientDetailsService" /> -->
+<!-- 		<property name="tokenServices"> -->
+<!-- 			<bean -->
+<!-- 				class="org.springframework.security.oauth2.provider.token.DefaultTokenServices"> -->
+<!-- 				<property name="tokenStore"> -->
+<!-- 					<bean -->
+<!-- 						class="org.springframework.security.oauth2.provider.token.store.InMemoryTokenStore">						 -->
+<!-- 					</bean> -->
+<!-- 					<bean -->
+<!-- 						class="org.springframework.security.oauth2.provider.token.store.JwtTokenStore"> -->
+<!-- 						<constructor-arg> -->
+<!-- 							<bean -->
+<!-- 								class="org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter" /> -->
+<!-- 						</constructor-arg> -->
+<!-- 					</bean> -->
+<!-- 				</property> -->
+<!-- 			</bean> -->
+<!-- 		</property> -->
+<!-- 	</bean> -->
+
+
+
+
+	<!-- AUTRES BEANS INTERESSANT POUR LA CONFIG DU RESOURCE-SERVER -->
+
+	<!-- <bean id="oauthAccessDeniedHandler" -->
+	<!-- class="org.springframework.security.oauth2.provider.error.OAuth2AccessDeniedHandler"> -->
+	<!-- </bean> -->
+
+	<!-- <bean id="oauthAccessDeniedHandler" -->
+	<!-- class="org.springframework.security.oauth2.provider.error.OAuth2AccessDeniedHandler"> -->
+	<!-- </bean> -->
+
+	<bean id="clientDetailsService"
+		class="org.springframework.security.oauth2.provider.client.InMemoryClientDetailsService">
+		<property name="clientDetailsStore">
+			<map>
+				<entry key="fredo">
+					<bean
+						class="org.springframework.security.oauth2.provider.client.BaseClientDetails">
+						<property name="clientId" value="fredo" />
+						<property name="authorizedGrantTypes">
+							<list>
+								<value>authorization_code</value>
+								<value>refresh_token</value>
+							</list>
+						</property>
+					</bean>
+				</entry>
+			</map>
+		</property>
+	</bean>
+
+
+	<!-- FOR BASIC AUTH -->
 	<sec:authentication-manager>
 		<sec:authentication-provider>
 			<sec:user-service>

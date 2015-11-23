@@ -16,6 +16,12 @@
 		<appender-ref ref="STDOUT" />
 	</logger>
 
+<!-- 	<logger name="org.springframework.security.oauth2" level="trace" -->
+	<logger name="org.springframework.security" level="trace"
+		additivity="false">
+		<appender-ref ref="STDOUT" />
+	</logger>
+
 	<root level="error">
 		<appender-ref ref="STDOUT" />
 	</root>

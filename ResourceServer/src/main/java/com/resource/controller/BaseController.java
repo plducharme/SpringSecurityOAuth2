@@ -29,10 +29,17 @@ public class BaseController {
 		return theResource();
 	}
 
-	// localhost:8080/ResourceServer/basicauthresource myuser:myuser
-	@RequestMapping(value = "/basicauthresource", method = RequestMethod.GET)
+	// localhost:8080/ResourceServer/basicauth/resource myuser:myuser
+	@RequestMapping(value = "/basicauth/resource", method = RequestMethod.GET)
 	@ResponseBody
 	public String protectedResource() {
+		return theResource();
+	}
+
+	// localhost:8080/ResourceServer/oauth/resource?access_token="fredo"
+	@RequestMapping(value = "/oauth/resource", method = RequestMethod.GET)
+	@ResponseBody
+	public String tokenResource() {
 		return theResource();
 	}
 
