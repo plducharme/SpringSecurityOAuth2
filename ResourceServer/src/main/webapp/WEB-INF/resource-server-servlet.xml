@@ -38,33 +38,19 @@
 	<!-- oauth:resource-server ajoute automatiquement le filtre OAuth2AuthenticationProcessingFilter 
 		avec OAuth2AuthenticationManager par defaut -->
 	<oauth:resource-server id="oauth2AuthFilter"
-		resource-id="springsec" />
-<!-- 		resource-id="springsec" authentication-manager-ref="authenticationManagerWithHardcodedClientDetails" /> -->
+		resource-id="springsec" token-services-ref="remoteTokenServices" />
 
+	<!-- dans notre cas, la particularite, c'est que c'est REMOTE -->
+	<bean id="remoteTokenServices"
+		class="org.springframework.security.oauth2.provider.token.RemoteTokenServices">
 
-<!-- 	<bean id="authenticationManagerWithHardcodedClientDetails" -->
-<!-- 		class="org.springframework.security.oauth2.provider.authentication.OAuth2AuthenticationManager"> -->
-<!-- 		<property name="clientDetailsService" ref="clientDetailsService" /> -->
-<!-- 		<property name="tokenServices"> -->
-<!-- 			<bean -->
-<!-- 				class="org.springframework.security.oauth2.provider.token.DefaultTokenServices"> -->
-<!-- 				<property name="tokenStore"> -->
-<!-- 					<bean -->
-<!-- 						class="org.springframework.security.oauth2.provider.token.store.InMemoryTokenStore">						 -->
-<!-- 					</bean> -->
-<!-- 					<bean -->
-<!-- 						class="org.springframework.security.oauth2.provider.token.store.JwtTokenStore"> -->
-<!-- 						<constructor-arg> -->
-<!-- 							<bean -->
-<!-- 								class="org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter" /> -->
-<!-- 						</constructor-arg> -->
-<!-- 					</bean> -->
-<!-- 				</property> -->
-<!-- 			</bean> -->
-<!-- 		</property> -->
-<!-- 	</bean> -->
+		<!-- ********************************** -->
+		<!-- C'EST ICI QU'ON METS L'AUTH SERVER, enfin l'endroit ou valider le 
+			token -->
+		<property name="checkTokenEndpointUrl" value="http://www.google.com/sts/oauth/check_token" />
+		<!-- ********************************** -->
 
-
+	</bean>
 
 
 	<!-- AUTRES BEANS INTERESSANT POUR LA CONFIG DU RESOURCE-SERVER -->
@@ -77,25 +63,6 @@
 	<!-- class="org.springframework.security.oauth2.provider.error.OAuth2AccessDeniedHandler"> -->
 	<!-- </bean> -->
 
-	<bean id="clientDetailsService"
-		class="org.springframework.security.oauth2.provider.client.InMemoryClientDetailsService">
-		<property name="clientDetailsStore">
-			<map>
-				<entry key="fredo">
-					<bean
-						class="org.springframework.security.oauth2.provider.client.BaseClientDetails">
-						<property name="clientId" value="fredo" />
-						<property name="authorizedGrantTypes">
-							<list>
-								<value>authorization_code</value>
-								<value>refresh_token</value>
-							</list>
-						</property>
-					</bean>
-				</entry>
-			</map>
-		</property>
-	</bean>
 
 
 	<!-- FOR BASIC AUTH -->
