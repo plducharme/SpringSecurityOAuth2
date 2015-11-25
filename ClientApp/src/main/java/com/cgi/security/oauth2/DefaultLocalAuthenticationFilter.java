@@ -70,6 +70,13 @@ public class DefaultLocalAuthenticationFilter extends AbstractAuthenticationProc
 	public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
 			throws IOException, ServletException {
 		HttpServletRequest request = (HttpServletRequest) req; 
+		
+		if(request.getSession() != null && request.getSession().getAttribute("SuperToken") != null){
+			
+			chain.doFilter(req, res);
+			return;
+		}
+		
 		if (request.getParameter("code") != null) {
 			AuthorizationCodeAccessTokenProvider authorizationCodeAccessTokenProvider = new AuthorizationCodeAccessTokenProvider();
 			
