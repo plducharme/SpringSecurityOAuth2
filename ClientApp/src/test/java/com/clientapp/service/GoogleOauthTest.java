@@ -66,37 +66,31 @@ public class GoogleOauthTest {
 		// OAuth2ProtectedResourceDetails res = usernamePasswordResource();
 		OAuth2ProtectedResourceDetails res = authorizationCodeResource();
 		// OAuth2ProtectedResourceDetails res = clientCredentialResource();
-		
-		
-		RestTemplate restTemplate = new RestTemplate();
-		
-		AuthorizationCodeAccessTokenProvider authorizationCodeAccessTokenProvider = new AuthorizationCodeAccessTokenProvider();
-		
-		
 
-		
-		//oauth2RestTemplate = new OAuth2RestTemplate(res);
+		RestTemplate restTemplate = new RestTemplate();
+
+		AuthorizationCodeAccessTokenProvider authorizationCodeAccessTokenProvider = new AuthorizationCodeAccessTokenProvider();
+
+		// oauth2RestTemplate = new OAuth2RestTemplate(res);
 		DefaultAccessTokenRequest accessTokenRequest = new DefaultAccessTokenRequest();
 		accessTokenRequest.setAuthorizationCode("4/b0aD58R3wRpcAzxIpwAUIypv31C7-ZNqiNyvycrYYlU");
 		DefaultOAuth2ClientContext defaultOAuth2ClientContext = new DefaultOAuth2ClientContext(accessTokenRequest);
-			
-		
+
 		oauth2RestTemplate = new OAuth2RestTemplate(res, defaultOAuth2ClientContext);
-	
-		
+
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
-		//headers.setContentType(MediaType.TEXT_PLAIN);
-		
-		HttpEntity<String> httpEntity = new HttpEntity<String>("helloWorld", headers );
+		// headers.setContentType(MediaType.TEXT_PLAIN);
 
-		
+		HttpEntity<String> httpEntity = new HttpEntity<String>("helloWorld", headers);
+
 		try {
-			//authorizationCodeAccessTokenProvider.obtainAuthorizationCode(res, accessTokenRequest);
-			
-			
-			final String loginResponse = oauth2RestTemplate.exchange("https://www.googleapis.com/o/oauth2",
-					HttpMethod.POST, httpEntity, String.class).getBody();
+			// authorizationCodeAccessTokenProvider.obtainAuthorizationCode(res,
+			// accessTokenRequest);
+
+			final String loginResponse = oauth2RestTemplate
+					.exchange("https://www.googleapis.com/o/oauth2", HttpMethod.POST, httpEntity, String.class)
+					.getBody();
 
 			assertNotNull(loginResponse);
 		} catch (OAuth2AccessDeniedException e) {
