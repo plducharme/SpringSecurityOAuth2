@@ -12,6 +12,8 @@
 	    http://www.springframework.org/schema/security 
 	    http://www.springframework.org/schema/security/spring-security-4.0.xsd">
 
+	<context:property-placeholder location="classpath:clientapp.properties" />	
+
 	    <!--apply the oauth client context -->
     <oauth:client id="oauth2ClientFilter"/>
 
@@ -59,7 +61,13 @@
     </sec:authentication-manager>
 
     <bean id="authProcessingFilter" class="com.cgi.security.oauth2.DefaultLocalAuthenticationFilter">
-        <property name="authenticationManager" ref="defaultAuthenticationManager"/>
+        <property name="tokenAttribute" value="${token.attribute}" />
+		<property name="authorizeUrl" value="${authorize.url}" />
+		<property name="sccessTokenUri" value="${access.token.uri}" />
+		<property name="clientSecret" value="${client.secret}" />
+		<property name="clientId" value="${client.id}" />
+		<property name="redirectUri" value="${redirect.uri}" />
+		<property name="scope" value="${scope}" />
     </bean>
 
     <!--
