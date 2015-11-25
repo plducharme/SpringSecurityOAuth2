@@ -1,0 +1,73 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:oauth="http://www.springframework.org/schema/security/oauth2"
+	xmlns:sec="http://www.springframework.org/schema/security" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+        http://www.springframework.org/schema/beans     
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context 
+        http://www.springframework.org/schema/context/spring-context.xsd	    
+	    http://www.springframework.org/schema/security/oauth2 
+	    http://www.springframework.org/schema/security/spring-security-oauth2.xsd
+	    http://www.springframework.org/schema/security 
+	    http://www.springframework.org/schema/security/spring-security-4.0.xsd">
+
+	    <!--apply the oauth client context -->
+    <oauth:client id="oauth2ClientFilter"/>
+
+    <oauth:resource id="google"
+                    type="authorization_code"
+                    client-id="638963840149-d5p79cp00obaumgrderkmjk3dkcecv0p.apps.googleusercontent.com"
+                    client-secret="Nrn9a7bKtwuAEmXGJFTB6WgM"
+                    access-token-uri="https://accounts.google.com/o/oauth2/token"
+                    user-authorization-uri="https://accounts.google.com/o/oauth2/auth"
+                    scope="https://www.googleapis.com/auth/calendar"
+                    client-authentication-scheme="form"
+            />
+
+    <oauth:rest-template id="googleCalendarRestTemplate" resource="google" access-token-provider="accessTokenProviderChain"/>
+
+    <!--
+        see OAuth2RestTemplate; configuration has to be duplicated here to provide the same authorization token providers
+        but use a different implementation for client token services
+     -->
+    <bean id="accessTokenProviderChain" class="org.springframework.security.oauth2.client.token.AccessTokenProviderChain">
+        <constructor-arg index="0">
+            <list>
+                <bean class="org.springframework.security.oauth2.client.token.grant.code.AuthorizationCodeAccessTokenProvider"/>
+            </list>
+        </constructor-arg>
+
+    </bean>
+    
+    <sec:http auto-config="false" entry-point-ref="authenticationEntryPoint" use-expressions="false" pattern="/**">
+        <!-- Spring security OAuth 2 does not allow anonymous access so we have to grant access only to authenticated users -->
+<!--         <sec:intercept-url pattern="/**" access="ROLE_USER" /> -->
+        <!-- ensure we put gcaldemo system credentials into the security context before the anonymous filter does -->
+        <sec:custom-filter ref="authProcessingFilter" before="ANONYMOUS_FILTER"/>
+        <sec:custom-filter ref="oauth2ClientFilter" after="EXCEPTION_TRANSLATION_FILTER"/>
+    </sec:http>
+
+    <!--
+        This is a dummy authentication entry point that just serves as an empty default entry point as we cannot use
+        default http security configuration.
+    -->
+    <bean id="authenticationEntryPoint" class="com.cgi.security.oauth2.DefaultLocalAuthenticationEntryPoint"/>
+
+    <sec:authentication-manager alias="defaultAuthenticationManager">
+        <sec:authentication-provider ref="authenticationProvider"/>
+    </sec:authentication-manager>
+
+    <bean id="authProcessingFilter" class="com.cgi.security.oauth2.DefaultLocalAuthenticationFilter">
+        <property name="authenticationManager" ref="defaultAuthenticationManager"/>
+    </bean>
+
+    <!--
+        BEWARE:
+        *******
+        This authentication provider is used here to simplify the demo application.
+        Use a *real* authentication provider in production!
+     -->
+    <bean id="authenticationProvider" class="org.springframework.security.authentication.TestingAuthenticationProvider"/>
+
+</beans>
