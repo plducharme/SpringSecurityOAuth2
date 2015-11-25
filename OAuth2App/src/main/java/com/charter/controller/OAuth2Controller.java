@@ -22,14 +22,16 @@ import org.springframework.web.servlet.ModelAndView;
 public class OAuth2Controller {
 	private static final String ACCESS_TOKEN_URI = "https://accounts.google.com/o/oauth2/token";
 	private static final String AUTHORIZE_URL = "https://accounts.google.com/o/oauth2/auth";
+	
 	// PLD's
 	// private static final String CLIENT_ID = "638963840149-d5p79cp00obaumgrderkmjk3dkcecv0p.apps.googleusercontent.com";
 	// private static final String CLIENT_SECRET = "Nrn9a7bKtwuAEmXGJFTB6WgM";
+	
 	// Fred's
 	private static final String CLIENT_ID = "366227280997-3ujnhtsiobd77357gs8e521fccr0ldqi.apps.googleusercontent.com";
 	private static final String CLIENT_SECRET = "0P__v2rn0cCaS5H97zCfVsNr";
-	// redirect_uri_mismatch
-	private static final String REDIRECT_URI = "http://localhost:8080/OAuth2App/auth";
+	private static final String REDIRECT_URI = "http://localhost:8080/OAuth2App/auth/callback.html";
+
 	private static final String SCOPES = "profile";
 
 	@RequestMapping(value = "/sa", method = RequestMethod.GET)
@@ -46,7 +48,7 @@ public class OAuth2Controller {
 		return new ModelAndView("redirect:" + request.getLocationUri());
 	}
 
-	@RequestMapping(value = "/auth", method = RequestMethod.GET)
+	@RequestMapping(value = "/auth/callback.html")
 	public ModelAndView authCallbackController(HttpServletRequest request, HttpServletResponse response)
 			throws IOException, OAuthSystemException, OAuthProblemException {
 
@@ -54,7 +56,7 @@ public class OAuth2Controller {
 		String stateResponse = oar.getState();
 
 		if (stateResponse.equals("")) {
-			return new ModelAndView("posIndex", "message", "Unsuccessful");
+			return new ModelAndView("hellopage", "message", "Unsuccessful");
 		}
 
 		OAuthClient oAuthClient = new OAuthClient(new URLConnectionClient());
@@ -62,7 +64,7 @@ public class OAuth2Controller {
 
 		System.out.println("Access token: '" + oAuthResponse.getAccessToken() + "'");
 
-		return new ModelAndView("posIndex", "message", "successful");
+		return new ModelAndView("hellopage", "message", "successful");
 	}
 
 	private OAuthAccessTokenResponse getAccessToken(OAuthAuthzResponse oar, OAuthClient oAuthClient)
