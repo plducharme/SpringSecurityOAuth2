@@ -6,7 +6,9 @@ import static org.springframework.security.oauth2.common.AuthenticationScheme.fo
 import static org.springframework.security.oauth2.common.AuthenticationScheme.query;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.Test;
 import org.springframework.http.HttpEntity;
@@ -20,9 +22,15 @@ import org.springframework.security.oauth2.client.resource.OAuth2AccessDeniedExc
 import org.springframework.security.oauth2.client.resource.OAuth2ProtectedResourceDetails;
 import org.springframework.security.oauth2.client.token.DefaultAccessTokenRequest;
 import org.springframework.security.oauth2.client.token.grant.client.ClientCredentialsResourceDetails;
+import org.springframework.security.oauth2.client.token.grant.code.AuthorizationCodeAccessTokenProvider;
 import org.springframework.security.oauth2.client.token.grant.code.AuthorizationCodeResourceDetails;
 import org.springframework.security.oauth2.client.token.grant.password.ResourceOwnerPasswordResourceDetails;
+import org.springframework.security.oauth2.common.OAuth2AccessToken;
+import org.springframework.security.oauth2.provider.OAuth2Authentication;
+import org.springframework.security.oauth2.provider.OAuth2Request;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
 
 public class GoogleOauthTest {
 	private static final String AUTHORIZE_URL = "https://accounts.google.com/o/oauth2/auth";
@@ -31,6 +39,7 @@ public class GoogleOauthTest {
 	private static final String ACCESS_TOKEN_URI = "https://accounts.google.com/o/oauth2/token";
 	private static final String CLIENT_SECRET = "Nrn9a7bKtwuAEmXGJFTB6WgM";
 	private static final String CLIENT_ID = "638963840149-d5p79cp00obaumgrderkmjk3dkcecv0p.apps.googleusercontent.com";
+	private static final String REDIRECT_URI = "http://localhost:8080";
 	private static final List<String> SCOPES;
 
 	static {
@@ -57,24 +66,43 @@ public class GoogleOauthTest {
 		// OAuth2ProtectedResourceDetails res = usernamePasswordResource();
 		OAuth2ProtectedResourceDetails res = authorizationCodeResource();
 		// OAuth2ProtectedResourceDetails res = clientCredentialResource();
+		
+		
+		RestTemplate restTemplate = new RestTemplate();
+		
+		AuthorizationCodeAccessTokenProvider authorizationCodeAccessTokenProvider = new AuthorizationCodeAccessTokenProvider();
+		
+		
 
-		oauth2RestTemplate = new OAuth2RestTemplate(res);
-		// , new DefaultOAuth2ClientContext(accessTokenRequest));
-
+		
+		//oauth2RestTemplate = new OAuth2RestTemplate(res);
+		DefaultAccessTokenRequest accessTokenRequest = new DefaultAccessTokenRequest();
+		accessTokenRequest.setAuthorizationCode("4/b0aD58R3wRpcAzxIpwAUIypv31C7-ZNqiNyvycrYYlU");
+		DefaultOAuth2ClientContext defaultOAuth2ClientContext = new DefaultOAuth2ClientContext(accessTokenRequest);
+			
+		
+		oauth2RestTemplate = new OAuth2RestTemplate(res, defaultOAuth2ClientContext);
+	
+		
 		HttpHeaders headers = new HttpHeaders();
-		// headers.setContentType(MediaType.APPLICATION_JSON);
-		headers.setContentType(MediaType.TEXT_PLAIN);
-		HttpEntity<String> httpEntity = new HttpEntity<String>("helloWorld", headers);
+		headers.setContentType(MediaType.APPLICATION_JSON);
+		//headers.setContentType(MediaType.TEXT_PLAIN);
+		
+		HttpEntity<String> httpEntity = new HttpEntity<String>("helloWorld", headers );
 
+		
 		try {
-			final String loginResponse = oauth2RestTemplate.exchange("https://www.googleapis.com/oauth2/v2/userinfo",
+			//authorizationCodeAccessTokenProvider.obtainAuthorizationCode(res, accessTokenRequest);
+			
+			
+			final String loginResponse = oauth2RestTemplate.exchange("https://www.googleapis.com/o/oauth2",
 					HttpMethod.POST, httpEntity, String.class).getBody();
 
 			assertNotNull(loginResponse);
 		} catch (OAuth2AccessDeniedException e) {
 			// ""Code was already redeemed."
 			// "Invalid OAuth 2 grant type: CLIENT_CREDENTIALS"
-			fail(((HttpClientErrorException) e.getCause()).getResponseBodyAsString());
+			fail(((RestClientException) e.getCause()).getMessage());
 		}
 
 	}
@@ -114,8 +142,9 @@ public class GoogleOauthTest {
 		googleOAuth2Details.setAccessTokenUri(ACCESS_TOKEN_URI);
 		googleOAuth2Details.setScope(SCOPES);
 		googleOAuth2Details.setUseCurrentUri(false);
-		googleOAuth2Details.setPreEstablishedRedirectUri("https://localhost/google_oauth2_login");
+		googleOAuth2Details.setPreEstablishedRedirectUri(REDIRECT_URI);
 		googleOAuth2Details.setTokenName("oauth_token");
+		googleOAuth2Details.setGrantType("authorization_code");
 
 		return googleOAuth2Details;
 	}
