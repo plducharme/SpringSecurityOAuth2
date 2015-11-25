@@ -15,8 +15,14 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpInputMessage;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpOutputMessage;
 import org.springframework.http.MediaType;
+import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.http.converter.HttpMessageNotWritableException;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -92,11 +98,17 @@ public class DefaultLocalAuthenticationFilter extends AbstractAuthenticationProc
 			googleOAuth2Details.setGrantType("authorization_code");
 
 			
-			
+			MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
+			List converters = new ArrayList<HttpMessageConverter>();
+			converters.add(converter);
+			authorizationCodeAccessTokenProvider.setMessageConverters(converters);
 			OAuth2AccessToken accessToken = authorizationCodeAccessTokenProvider.obtainAccessToken(googleOAuth2Details, accessTokenRequest);
 			
 			defaultOAuth2ClientContext.setAccessToken(accessToken);
 			request.getSession(true).setAttribute("SuperToken", accessToken);
+			Authentication authentication = new TestingAuthenticationToken("internal_system_user", "internal_null_credentials", "ROLE_USER");
+	        authentication.setAuthenticated(true);
+	        SecurityContextHolder.getContext().setAuthentication(authentication);
 			
 //			oauth2RestTemplate = new OAuth2RestTemplate(googleOAuth2Details, defaultOAuth2ClientContext);
 //		
@@ -130,7 +142,7 @@ public class DefaultLocalAuthenticationFilter extends AbstractAuthenticationProc
 		return getAuthenticationManager().authenticate(authentication);
 	}
 	
-	
+
 	
 	
 	
