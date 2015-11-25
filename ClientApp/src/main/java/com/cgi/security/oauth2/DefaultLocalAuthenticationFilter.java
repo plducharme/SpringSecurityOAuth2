@@ -27,15 +27,17 @@ import org.springframework.security.web.authentication.AbstractAuthenticationPro
 
 public class DefaultLocalAuthenticationFilter extends AbstractAuthenticationProcessingFilter {
 
+	private static final String TOKEN_ATTRIBUTE = "SuperToken";
 	private static final String AUTHORIZE_URL = "https://accounts.google.com/o/oauth2/auth";
 	private static final String ACCESS_TOKEN_URI = "https://accounts.google.com/o/oauth2/token";
 	private static final String CLIENT_SECRET = "Nrn9a7bKtwuAEmXGJFTB6WgM";
 	private static final String CLIENT_ID = "638963840149-d5p79cp00obaumgrderkmjk3dkcecv0p.apps.googleusercontent.com";
 	private static final String REDIRECT_URI = "http://localhost:8080";
+	private static final String SCOPE = "profile+email+openid";
 	private static final List<String> SCOPES;
 
 	static {
-		SCOPES = new ArrayList<String>();
+		SCOPES = new ArrayList<String>(6);
 		SCOPES.add("openid");
 		SCOPES.add("email");
 		SCOPES.add("profile");
@@ -50,7 +52,7 @@ public class DefaultLocalAuthenticationFilter extends AbstractAuthenticationProc
 			throws IOException, ServletException {
 		HttpServletRequest request = (HttpServletRequest) req;
 
-		if (request.getSession() != null && request.getSession().getAttribute("SuperToken") != null) {
+		if (request.getSession() != null && request.getSession().getAttribute(TOKEN_ATTRIBUTE) != null) {
 
 			chain.doFilter(req, res);
 			return;
@@ -86,7 +88,7 @@ public class DefaultLocalAuthenticationFilter extends AbstractAuthenticationProc
 					accessTokenRequest);
 
 			defaultOAuth2ClientContext.setAccessToken(accessToken);
-			request.getSession(true).setAttribute("SuperToken", accessToken);
+			request.getSession(true).setAttribute(TOKEN_ATTRIBUTE, accessToken);
 			Authentication authentication = new TestingAuthenticationToken("internal_system_user",
 					"internal_null_credentials", "ROLE_USER");
 			authentication.setAuthenticated(true);
@@ -95,8 +97,8 @@ public class DefaultLocalAuthenticationFilter extends AbstractAuthenticationProc
 		} else {
 			HttpServletResponse resp = (HttpServletResponse) res;
 			resp.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
-			resp.setHeader("Location",
-					"https://accounts.google.com/o/oauth2/auth?client_id=638963840149-d5p79cp00obaumgrderkmjk3dkcecv0p.apps.googleusercontent.com&redirect_uri=http://localhost:8080&response_type=code&scope=profile+email+openid");
+			resp.setHeader("Location", AUTHORIZE_URL + "?client_id=" + CLIENT_ID + "&redirect_uri=" + REDIRECT_URI
+					+ "&response_type=" + "code&scope=" + SCOPE);
 		}
 
 		chain.doFilter(req, res);
