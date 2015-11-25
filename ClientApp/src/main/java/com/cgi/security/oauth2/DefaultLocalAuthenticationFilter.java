@@ -58,50 +58,57 @@ public class DefaultLocalAuthenticationFilter extends AbstractAuthenticationProc
 			return;
 		}
 
-		String coreParameter = request.getParameter("code");
-		if (coreParameter != null) {
-			AuthorizationCodeAccessTokenProvider authorizationCodeAccessTokenProvider = new AuthorizationCodeAccessTokenProvider();
-
-			DefaultAccessTokenRequest accessTokenRequest = new DefaultAccessTokenRequest();
-			accessTokenRequest.setAuthorizationCode(coreParameter);
-			DefaultOAuth2ClientContext defaultOAuth2ClientContext = new DefaultOAuth2ClientContext(accessTokenRequest);
-
-			AuthorizationCodeResourceDetails googleOAuth2Details = new AuthorizationCodeResourceDetails();
-
-			googleOAuth2Details.setAuthenticationScheme(AuthenticationScheme.query);
-			googleOAuth2Details.setClientAuthenticationScheme(AuthenticationScheme.form);
-			googleOAuth2Details.setClientId(CLIENT_ID);
-			googleOAuth2Details.setClientSecret(CLIENT_SECRET);
-			googleOAuth2Details.setUserAuthorizationUri(AUTHORIZE_URL);
-			googleOAuth2Details.setAccessTokenUri(ACCESS_TOKEN_URI);
-			googleOAuth2Details.setScope(SCOPES);
-			googleOAuth2Details.setUseCurrentUri(false);
-			googleOAuth2Details.setPreEstablishedRedirectUri(REDIRECT_URI);
-			googleOAuth2Details.setTokenName("oauth_token");
-			googleOAuth2Details.setGrantType("authorization_code");
-
-			MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
-			List<HttpMessageConverter<?>> converters = new ArrayList<HttpMessageConverter<?>>();
-			converters.add(converter);
-			authorizationCodeAccessTokenProvider.setMessageConverters(converters);
-			OAuth2AccessToken accessToken = authorizationCodeAccessTokenProvider.obtainAccessToken(googleOAuth2Details,
-					accessTokenRequest);
-
-			defaultOAuth2ClientContext.setAccessToken(accessToken);
-			request.getSession(true).setAttribute(TOKEN_ATTRIBUTE, accessToken);
-			Authentication authentication = new TestingAuthenticationToken("internal_system_user",
-					"internal_null_credentials", "ROLE_USER");
-			authentication.setAuthenticated(true);
-			SecurityContextHolder.getContext().setAuthentication(authentication);
-
-		} else {
+		String codeParameter = request.getParameter("code");
+		if (codeParameter == null) {
 			HttpServletResponse resp = (HttpServletResponse) res;
 			resp.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
 			resp.setHeader("Location", AUTHORIZE_URL + "?client_id=" + CLIENT_ID + "&redirect_uri=" + REDIRECT_URI
 					+ "&response_type=" + "code&scope=" + SCOPE);
+
+		} else {
+			final DefaultAccessTokenRequest accessTokenRequest = new DefaultAccessTokenRequest();
+			accessTokenRequest.setAuthorizationCode(codeParameter);
+
+			filterWithCode(request, accessTokenRequest);
 		}
 
 		chain.doFilter(req, res);
+	}
+
+	private void filterWithCode(HttpServletRequest request, final DefaultAccessTokenRequest accessTokenRequest) {
+		final AuthorizationCodeResourceDetails googleOAuth2Details = new AuthorizationCodeResourceDetails();
+
+		googleOAuth2Details.setAuthenticationScheme(AuthenticationScheme.query);
+		googleOAuth2Details.setClientAuthenticationScheme(AuthenticationScheme.form);
+		googleOAuth2Details.setClientId(CLIENT_ID);
+		googleOAuth2Details.setClientSecret(CLIENT_SECRET);
+		googleOAuth2Details.setUserAuthorizationUri(AUTHORIZE_URL);
+		googleOAuth2Details.setAccessTokenUri(ACCESS_TOKEN_URI);
+		googleOAuth2Details.setScope(SCOPES);
+		googleOAuth2Details.setUseCurrentUri(false);
+		googleOAuth2Details.setPreEstablishedRedirectUri(REDIRECT_URI);
+		googleOAuth2Details.setTokenName("oauth_token");
+		googleOAuth2Details.setGrantType("authorization_code");
+
+		final MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
+		final List<HttpMessageConverter<?>> converters = new ArrayList<HttpMessageConverter<?>>();
+		converters.add(converter);
+
+		final AuthorizationCodeAccessTokenProvider authorizationCodeAccessTokenProvider = new AuthorizationCodeAccessTokenProvider();
+		authorizationCodeAccessTokenProvider.setMessageConverters(converters);
+		final OAuth2AccessToken accessToken = authorizationCodeAccessTokenProvider
+				.obtainAccessToken(googleOAuth2Details, accessTokenRequest);
+
+		final DefaultOAuth2ClientContext defaultOAuth2ClientContext = new DefaultOAuth2ClientContext(
+				accessTokenRequest);
+		defaultOAuth2ClientContext.setAccessToken(accessToken);
+
+		request.getSession(true).setAttribute(TOKEN_ATTRIBUTE, accessToken);
+
+		final Authentication authentication = new TestingAuthenticationToken("internal_system_user",
+				"internal_null_credentials", "ROLE_USER");
+		authentication.setAuthenticated(true);
+		SecurityContextHolder.getContext().setAuthentication(authentication);
 	}
 
 	@Override
